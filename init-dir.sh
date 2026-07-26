@@ -9,7 +9,7 @@ set -e
 echo "[init-dir] Starting directory initialization and cross-platform permission setup..."
 
 # 1. 建立所有必要的 ./data 子目錄
-mkdir -p /data/n8n /data/ollama /data/open-webui /data/postgres /data/qdrant
+mkdir -p /data/n8n /data/ollama /data/vllm /data/open-webui /data/postgres /data/qdrant
 
 # 2. 檢測宿主機 OS 環境 (Linux / Windows WSL / macOS Docker Desktop)
 KERNEL_INFO=$(uname -r 2>/dev/null || true)
