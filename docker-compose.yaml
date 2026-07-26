@@ -82,12 +82,12 @@ services:
       - ./data/vllm:/root/.cache/huggingface # 模型檔與快取實體儲存路徑
     #environment:
     #  - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
-    #command: >
-    #  --host ${VLLM_HOST-0.0.0.0}
-    #  --port 8000
-    #  --max-model-len ${VLLM_MAX_MODEL_LEN-4096}
-    #  --gpu-memory-utilization ${VLLM_GPU_MEM_UTIL}
-    #  ${VLLM_MODEL}
+    command: >
+      --host ${VLLM_HOST-0.0.0.0}
+      --port 8000
+      --max-model-len ${VLLM_MAX_MODEL_LEN-4096}
+      --gpu-memory-utilization ${VLLM_GPU_MEM_UTIL}
+      ${VLLM_MODEL}
     # GPU support
     deploy:
       resources:
@@ -137,6 +137,9 @@ services:
       - QDRANT_URI=${QDRANT_URI}
       - QDRANT_API_KEY=${QDRANT_API_KEY}
       - QDRANT_SERVICE_READ_ONLY_API_KEY=${QDRANT_SERVICE_READ_ONLY_API_KEY}
+      # 直接使用 vllm 的容器名稱作為網址
+      - OPENAI_API_BASE_URL=${VLLM_BASE_URL}
+      - OPENAI_API_KEY=vllm-secret
     volumes:
       - ./data/open-webui:/app/backend/data # WebUI 使用者設定與對話資料庫
     depends_on:
