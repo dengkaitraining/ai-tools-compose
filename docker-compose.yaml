@@ -43,15 +43,15 @@ services:
     #  nofile:
     #    soft: 65536
     #    hard: 65536
-    ## GPU support
-    # deploy:
-    #   resources:
-    #     reservations:
-    #       devices:
-    #         - driver: ${OLLAMA_GPU_DRIVER-nvidia}
-    #           count: ${OLLAMA_GPU_COUNT-1}
-    #           capabilities:
-    #             - gpu
+    # GPU support
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: ${OLLAMA_GPU_DRIVER-nvidia}
+              count: ${OLLAMA_GPU_COUNT-1}
+              capabilities:
+                - gpu
     #extra_hosts:
     #  - host.docker.internal:host-gateway
     volumes:
