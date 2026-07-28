@@ -2,13 +2,12 @@
 # 專案名稱: ai-tools-compose
 # 功能簡述: AI 工具整合堆疊 Docker Compose 設定檔
 # 架構模組:
-#   1. ollama      - ollama 本地大語言模型 (LLM) 推理引擎服務
-#   2. vLLM        - vLLM 本地大語言模型 (LLM) 推理引擎服務
-#   3. qdrant      - 向量資料庫服務 (向量檢索與 RAG 支援)
-#   4. open-webui  - Open WebUI 網頁圖形化介面 (整合 Ollama、Qdrant 與 Tika)
-#   5. postgres    - PostgreSQL 16 關聯式資料庫 (提供 n8n 資料持久化)
-#   6. n8n         - 工作流自動化與 AI Agent 流程編排平台
-#   7. tika        - Apache Tika 文件解析伺服器 (支援 PDF/Word 等文本抽離)
+#   1. ollama      - 本地大語言模型 (LLM) 推理引擎服務
+#   2. qdrant      - 向量資料庫服務 (向量檢索與 RAG 支援)
+#   3. open-webui  - Open WebUI 網頁圖形化介面 (整合 Ollama、Qdrant 與 Tika)
+#   4. postgres    - PostgreSQL 16 關聯式資料庫 (提供 n8n 資料持久化)
+#   5. n8n         - 工作流自動化與 AI Agent 流程編排平台
+#   6. tika        - Apache Tika 文件解析伺服器 (支援 PDF/Word 等文本抽離)
 # 網路名稱: web-app-bridge (橋接網路)
 # 資料儲存: 全部掛載至專案內 `./data/` 實體相對路徑
 # =============================================================================
@@ -61,47 +60,7 @@ services:
       - web-app-bridge
 
   # ---------------------------------------------------------------------------
-  # 2. vLLM 大語言模型推理服務
-  # ---------------------------------------------------------------------------
-  vllm:
-    container_name: vllm
-    image: vllm/vllm-openai:${VLLM_DOCKER_TAG-latest}
-    pull_policy: always
-    tty: true
-    restart: unless-stopped
-    ports:
-      - "8000:8000" # 開放 API 埠號供外部或宿主機調用
-    # 關鍵設定：調高檔案開啟上限
-    #ulimits:
-    #  nofile:
-    #    soft: 65536
-    #    hard: 65536
-    #extra_hosts:
-    #  - host.docker.internal:host-gateway
-    volumes:
-      - ./data/vllm:/root/.cache/huggingface # 模型檔與快取實體儲存路徑
-    #environment:
-    #  - HUGGING_FACE_HUB_TOKEN=${HUGGING_FACE_HUB_TOKEN}
-    command: >
-      --host ${VLLM_HOST-0.0.0.0}
-      --port 8000
-      --max-model-len ${VLLM_MAX_MODEL_LEN-4096}
-      --gpu-memory-utilization ${VLLM_GPU_MEM_UTIL}
-      ${VLLM_MODEL}
-    # GPU support
-    deploy:
-      resources:
-        reservations:
-          devices:
-            - driver: ${VLLM_GPU_DRIVER-nvidia}
-              count: ${VLLM_GPU_COUNT-1}
-              capabilities:
-                - gpu
-    ipc: host
-    networks:
-      - web-app-bridge
-  # ---------------------------------------------------------------------------
-  # 3. Qdrant 高效能向量資料庫服務
+  # 2. Qdrant 高效能向量資料庫服務
   # ---------------------------------------------------------------------------
   qdrant:
     container_name: qdrant
@@ -119,7 +78,7 @@ services:
       - web-app-bridge
 
   # ---------------------------------------------------------------------------
-  # 4. Open WebUI 網頁圖形化介面服務
+  # 3. Open WebUI 網頁圖形化介面服務
   # ---------------------------------------------------------------------------
   open-webui:
     container_name: open-webui
@@ -137,15 +96,10 @@ services:
       - QDRANT_URI=${QDRANT_URI}
       - QDRANT_API_KEY=${QDRANT_API_KEY}
       - QDRANT_SERVICE_READ_ONLY_API_KEY=${QDRANT_SERVICE_READ_ONLY_API_KEY}
-      # 直接使用 vllm 的容器名稱作為網址
-      - OPENAI_API_BASE_URL=${VLLM_BASE_URL}
-      - OPENAI_API_KEY=vllm-secret
     volumes:
       - ./data/open-webui:/app/backend/data # WebUI 使用者設定與對話資料庫
     depends_on:
       ollama:
-        condition: service_started
-      vllm:
         condition: service_started
       qdrant:
         condition: service_started
@@ -163,7 +117,7 @@ services:
       - web-app-bridge
 
   # ---------------------------------------------------------------------------
-  # 5. PostgreSQL 16 關聯式資料庫服務
+  # 4. PostgreSQL 16 關聯式資料庫服務
   # ---------------------------------------------------------------------------
   postgres:
     container_name: postgres-16
@@ -189,7 +143,7 @@ services:
       - web-app-bridge
 
   # ---------------------------------------------------------------------------
-  # 6. n8n 工作流與 AI Agent 自動化服務
+  # 5. n8n 工作流與 AI Agent 自動化服務
   # ---------------------------------------------------------------------------
   n8n:
     container_name: n8n
@@ -223,8 +177,6 @@ services:
         condition: service_completed_successfully
       ollama:
         condition: service_started
-      vllm:
-        condition: service_started
       postgres:
         condition: service_healthy
     extra_hosts:
@@ -233,7 +185,7 @@ services:
       - web-app-bridge
 
   # ---------------------------------------------------------------------------
-  # 7. Apache Tika 文件文本解析與抽取服務
+  # 6. Apache Tika 文件文本解析與抽取服務
   # ---------------------------------------------------------------------------
   tika:
     container_name: apache-tika
@@ -245,8 +197,6 @@ services:
       - TIKA_CHILD_JVM_OPTS=-Xmx4g # 限制 JVM 最大記憶體為 4GB 避免大型文件 OOM
     depends_on:
       ollama:
-        condition: service_started
-      vllm:
         condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
