@@ -1,13 +1,13 @@
 # ai-tools-compose
 
-![GitHub repo size](https://img.shields.io/github/repo-size/dengkaitraining/ai-tools-compose)
-![GitHub language count](https://img.shields.io/github/languages/count/dengkaitraining/ai-tools-compose)
-![GitHub top language](https://img.shields.io/github/languages/top/dengkaitraining/ai-tools-compose)
-![GitHub last commit](https://img.shields.io/github/last-commit/dengkaitraining/ai-tools-compose?color=red)
+![GitHub repo size](https://img.shields.io/github/repo-size/dengkaitraining/llm-ai-tools)
+![GitHub language count](https://img.shields.io/github/languages/count/dengkaitraining/llm-ai-tools)
+![GitHub top language](https://img.shields.io/github/languages/top/dengkaitraining/llm-ai-tools)
+![GitHub last commit](https://img.shields.io/github/last-commit/dengkaitraining/llm-ai-tools?color=red)
 ![Docker Compose V2](https://img.shields.io/badge/Docker--Compose-V2-blue?logo=docker)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-`ai-tools-compose` 是一個整合大語言模型 (LLM) 推理、向量檢索 (RAG)、工作流自動化 (Automation) 及多格式文件文字抽離的一站式微服務 Docker 容器堆疊方案。內建跨平台 (Linux / Windows WSL2 / macOS) 資料目錄權限自動修復機制，透過本專案，開發者與企業可快速於本機或伺服器建置穩定、無縫運作的 AI 工具開發與運行環境。
+`llm-ai-tools` 是一個整合大語言模型 (LLM) 推理、向量檢索 (RAG)、工作流自動化 (Automation) 及多格式文件文字抽離的一站式微服務 Docker 容器堆疊方案。內建跨平台 (Linux / Windows WSL2 / macOS) 資料目錄權限自動修復機制，透過本專案，開發者與企業可快速於本機或伺服器建置穩定、無縫運作的 AI 工具開發與運行環境。
 
 ---
 
@@ -18,7 +18,7 @@
 - **Ollama**: 本地大語言模型 (LLM) 推理引擎，支援 Llama 3, Qwen, Mistral 等模型。
 - **Qdrant**: 高效能向量資料庫 (Vector Database)，提供 RAG 語意檢索與向量檢索功能。
 - **Open WebUI**: 現代化 Web 聊天圖形介面，整合 Ollama 模型、Qdrant 向量庫與 Tika 文件解析。
-- **PostgreSQL 16**: 關聯式資料庫，作為 n8n 工作流引擎之核心資料儲存庫。
+- **PostgreSQL 18**: 關聯式資料庫，作為 n8n 工作流引擎之核心資料儲存庫。
 - **n8n**: 流程自動化與 AI Agent 流程編排平台，支援節點式串接與自動化任務執行。
 - **Apache Tika**: 文件文本擷取伺服器，自動解析 PDF、Word 等格式並優化 RAG 前處理。
 
@@ -47,7 +47,7 @@ graph TD
             
             subgraph Automation_Stack ["工作流與資料庫"]
                 n8n["n8n 工作流平台<br/>(Port 5678)"]
-                Postgres["PostgreSQL 16 資料庫<br/>(Port 5432)"]
+                Postgres["PostgreSQL 18 資料庫<br/>(Port 5432)"]
             end
             
         end
@@ -113,7 +113,7 @@ sequenceDiagram
     participant Qdrant as Qdrant 向量庫
     participant Ollama as Ollama 推理引擎
     participant n8n as n8n 自動化平台
-    participant DB as PostgreSQL 16
+    participant DB as PostgreSQL 18
 
     %% 初始化階段
     Init->>Init: 1. 自動檢測宿主 OS (Linux/Windows/macOS) 並修復 ./data/n8n 權限
@@ -154,16 +154,11 @@ sequenceDiagram
 ### 2.2 專案複製與初始化
 1. **複製專案庫**:
    ```bash
-   git clone https://github.com/dengkaitraining/ai-tools-compose.git
-   cd ai-tools-compose
+   git clone https://github.com/dengkaitraining/llm-ai-tools.git
+   cd llm-ai-tools
    ```
 
-2. **建立外部 Docker 橋接網路** (首次執行需建立):
-   ```bash
-   docker network create web-app-bridge
-   ```
-
-3. **建立環境變數設定檔**:
+2. **建立環境變數設定檔**:
    複製 `.env.example` 為 `.env`，並根據部署需求調整自訂金鑰與密碼：
    ```bash
    cp .env.example .env
@@ -178,28 +173,29 @@ sequenceDiagram
 
 | 分類 | 變數名稱 | 預設值 / 建議值 | 說明 |
 | :--- | :--- | :--- | :--- |
+| **Global** | `DATA_DIR` | `./data` | 資料儲存根目錄 |
+| | `GENERIC_TIMEZONE` | `Asia/Taipei` | 系統與排程運作時區 |
 | **Ollama** | `OLLAMA_DOCKER_TAG` | `latest` | Ollama 容器映像檔版本 |
-| | `OLLAMA_BASE_URL` | `http://ollama:11434` | Open WebUI 連接 Ollama 之內部網址 |
+| | `OLLAMA_BASE_URL` | `http://llm-ai-ollama:11434` | Open WebUI 連接 Ollama 之內部網址 |
 | **Open WebUI** | `WEBUI_DOCKER_TAG` | `main` | Open WebUI 容器映像檔版本 |
 | | `WEBUI_SECRET_KEY` | `(隨機密碼)` | 用於 Session/Cookie 加密之金鑰 |
 | | `ENABLE_SIGNUP` | `False` | 是否開放新使用者自由註冊 |
 | **Qdrant** | `VECTOR_DB` | `qdrant` | 指定向量資料庫類型 |
-| | `QDRANT_URI` | `http://qdrant:6333` | Qdrant 內部 REST API 位址 |
+| | `QDRANT_URI` | `http://llm-ai-qdrant:6333` | Qdrant 內部 REST API 位址 |
 | | `QDRANT_API_KEY` | `(自訂密碼)` | Qdrant 管理者 API 金鑰 |
-| **Tika** | `TIKA_SERVER_URL` | `http://tika:9998` | Tika 文件解析伺服器內部網址 |
+| **Tika** | `TIKA_SERVER_URL` | `http://llm-ai-tika:9998` | Tika 文件解析伺服器內部網址 |
 | **PostgreSQL** | `POSTGRES_USER` | `root` | PostgreSQL 管理者帳號 |
 | | `POSTGRES_PASSWORD` | `(自訂密碼)` | PostgreSQL 管理者密碼 |
 | | `POSTGRES_DB` | `n8n` | 預設建立之資料庫名稱 |
 | **n8n** | `N8N_DOMAIN_NAME` | `localhost` | n8n 服務網域名稱 |
 | | `N8N_WEBHOOK_URL` | `https://your-domain.com/` | n8n 外部 Webhook 呼叫位址 |
-| | `GENERIC_TIMEZONE` | `Asia/Taipei` | 系統與排程運作時區 |
 
 ### 3.2 實體目錄資料持久化 (Volume Persistence)
 所有微服務容器資料均掛載至專案內部的實體相對目錄 `./data/`：
 - `./data/ollama`: 儲存下載之 Ollama LLM 模型與快取。
 - `./data/qdrant`: 儲存 Qdrant 向量索引與資料庫檔。
 - `./data/open-webui`: 儲存 Open WebUI 使用者設定與 SQLite 庫。
-- `./data/postgres`: 儲存 PostgreSQL 16 資料庫檔案。
+- `./data/postgres`: 儲存 PostgreSQL 18 資料庫檔案。
 - `./data/n8n`: 儲存 n8n 工作流程、金鑰與憑證。
 
 ### 3.3 跨平台相容性處理 (Linux & Windows & macOS)
@@ -214,14 +210,12 @@ sequenceDiagram
 
 | 檔案名稱 | 檔案類型 | 詳細說明與功能描述 |
 | :--- | :--- | :--- |
-| [docker-compose.yaml](file:///home/dengkai/projects/ai-tools-compose/docker-compose.yaml) | YAML | 微服務編排主檔。定義 `init-dir` 權限修復服務、6 大 AI 服務容器、`web-app-bridge` 外部橋接網路與健康檢查設定。 |
-| [.env](file:///home/dengkai/projects/ai-tools-compose/.env) | ENV | 實體運行的環境變數檔。包含 PostgreSQL 密碼、Qdrant API 金鑰、Open WebUI 密鑰與 n8n 時區。 |
-| [.env.example](file:///home/dengkai/projects/ai-tools-compose/.env.example) | ENV | 環境變數範本檔。提供預設範例值與豐富的欄位說明註解。 |
-| [init-dir.sh](file:///home/dengkai/projects/ai-tools-compose/init-dir.sh) | Shell | **跨平台自動修復腳本**。自動判斷 Linux / Windows (WSL2) / macOS 並修正 `./data/n8n` 等 Volume 掛載權限。 |
-| [init-data.sh](file:///home/dengkai/projects/ai-tools-compose/init-data.sh) | Shell | **PostgreSQL 初始化腳本**。在 Postgres 容器首次啟動時自動建立 n8n 專用非 root 資料庫使用者與權限。 |
-| [Dockerfile](file:///home/dengkai/projects/ai-tools-compose/Dockerfile) | Dockerfile | Open WebUI 多階段編建檔（包含 SvelteKit 前端編譯與 Python 後端 FastAPI 模型預載）。 |
-| [tika-config.xml](file:///home/dengkai/projects/ai-tools-compose/tika-config.xml/tika-config.xml) | XML | Apache Tika 配置文件。停用高耗能的 Tesseract OCR，優化大批次 PDF/DOCX 文字萃取效能。 |
-| [.gitattributes](file:///home/dengkai/projects/ai-tools-compose/.gitattributes) | Config | 跨平台 Git 換行符強制設定檔。確保所有 `*.sh` Shell 腳本強制保持 Unix LF 格式。 |
+| [docker-compose.yaml](docker-compose.yaml) | YAML | 微服務編排主檔。定義 `init-dir` 權限修復服務、6 大 AI 服務容器、`web-app-bridge` 外部橋接網路與健康檢查設定。 |
+| [.env.example](.env.example) | ENV | 環境變數範本檔。提供預設範例值與豐富的欄位說明註解，包含 PostgreSQL 密碼、Qdrant API 金鑰、Open WebUI 密鑰與 n8n 時區。 |
+| [init-dir.sh](/scripts/init/init-dir.sh) | Shell | **跨平台自動修復腳本**。自動判斷 Linux / Windows (WSL2) / macOS 並修正 `./data/n8n` 等 Volume 掛載權限。 |
+| [init-data.sh](/scripts/init/init-data.sh) | Shell | **PostgreSQL 初始化腳本**。在 Postgres 容器首次啟動時自動建立 n8n 專用非 root 資料庫使用者與權限。 |
+| [tika-config.xml](/tika-config.xml/tika-config.xml) | XML | Apache Tika 配置文件。停用高耗能的 Tesseract OCR，優化大批次 PDF/DOCX 文字萃取效能。 |
+| [.gitattributes](.gitattributes) | Config | 跨平台 Git 換行符強制設定檔。確保所有 `*.sh` Shell 腳本強制保持 Unix LF 格式。 |
 
 ---
 
@@ -258,26 +252,15 @@ docker compose down
 | **Qdrant Dashboard** | [http://localhost:6333/dashboard](http://localhost:6333/dashboard) | 向量資料庫控制台 |
 | **Ollama API** | [http://localhost:11434](http://localhost:11434) | Ollama REST API 端點 |
 | **Apache Tika** | [http://localhost:9998](http://localhost:9998) | Tika 文件萃取 REST Server |
-| **PostgreSQL 16** | `localhost:5432` | 關聯式資料庫服務端點 |
+| **PostgreSQL 18** | `localhost:5432` | 關聯式資料庫服務端點 |
 
 ---
 
 ## 5. 資料夾結構與架構簡述 (Project Structure)
 
 ```
-ai-tools-compose/
-├── .agents/                      # Agent 任務紀錄與 Prompt 日誌
-│   ├── skills/                   # ai-tools-compose 技能手冊目錄
-│   │   └── ai-tools-compose/
-│   │       ├── SKILL.md          # 技能主手冊
-│   │       ├── inspections/      # 檢查與驗證程序清單
-│   │       ├── references/       # 架構與互動流程解說
-│   │       └── scripts/          # Docker Compose 工具說明
-│   └── task_logs/                # 標準任務執行紀錄檔
-│       ├── 01_implementation_plan.md
-│       ├── 02_task_list.md
-│       └── 03_walkthrough.md
-├── data/                         # [已忽略] 容器實體資料持久化目錄
+llm-ai-tools/
+├── data/                         # 容器實體資料持久化目錄
 │   ├── n8n/                      # n8n 工作流與設定
 │   ├── ollama/                   # Ollama 大模型檔與快取
 │   ├── open-webui/               # Open WebUI 帳號與對話庫
@@ -285,16 +268,24 @@ ai-tools-compose/
 │   └── qdrant/                   # Qdrant 向量庫檔案
 ├── docs/                         # 專案相關文件與參考說明
 ├── local-files/                  # n8n 容器共用本機檔案交換目錄
+├── scripts/                      # 專案腳本程式
+│   ├── init/                     # 專案初始化腳本程式
+│   │   ├── init-data.sh          # PostgreSQL 初始化非 Root 使用
+│   │   └── init-dir.sh           # 跨平台資料目錄自動建立與權限修
+│   └── man/                      # 專案手動腳本程式
+│       ├── enter_dc.bat          # 快速進入 Docker 容器之互動式輔助腳本 (batch)
+│       ├── enter_dc.ps1          # 快速進入 Docker 容器之互動式輔助腳本 (powershell)
+│       ├── enter_dc.sh           # 快速進入 Docker 容器之互動式輔助腳本 (shell script)
+│       ├── ip_dc_all.ps1         # 快速查詢 Docker Compose 所有容器之 IP 位址 (powershell)
+│       ├── ip_dc_all.sh          # 快速查詢 Docker Compose 所有容器之 IP 位址 (shell script)
+│       ├── ip_dc.ps1             # 快速查詢單一 Docker 容器之 IP 位址 (powershell)
+│       └── ip_dc.sh              # 快速查詢單一 Docker 容器之 IP 位址 (shell script)
 ├── tika-config.xml/              # Apache Tika 自訂設定檔目錄
 │   └── tika-config.xml           # PDF 停用 OCR 效能設定檔
-├── .env                          # [已忽略] 環境變數設定檔
 ├── .env.example                  # 環境變數範本檔
 ├── .gitattributes                # Git 跨平台換行符規則設定檔
 ├── .gitignore                    # Git 忽略檔案設定
-├── Dockerfile                    # Open WebUI 多階段建置檔
 ├── docker-compose.yaml           # Docker Compose 微服務編排主設定檔
-├── init-data.sh                  # PostgreSQL 初始化非 Root 使用者腳本
-├── init-dir.sh                   # 跨平台資料目錄自動建立與權限修復腳本
 └── README.md                     # 專案說明文件
 ```
 
@@ -309,7 +300,7 @@ docker compose config
 ```
 
 ### 6.2 服務健康檢查測試
-- **PostgreSQL 16**:
+- **PostgreSQL 18**:
   ```bash
   docker compose exec postgres pg_isready -h localhost -U root -d n8n
   ```
