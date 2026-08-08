@@ -39,6 +39,7 @@ services:
     ports:
       - "${OLLAMA_HOST_PORT}:${OLLAMA_DOCKER_PORT}" # 開放 API 埠號供外部或宿主機調用
     environment:
+      LLAMA_ARG_FIT: ${OLLAMA_ARG_FIT-off} # 是否啟用 LLaMA 模型自動調整 (預設 off)
       TZ: ${GENERIC_TIMEZONE}
     # 關鍵設定：調高檔案開啟上限
     #ulimits:
