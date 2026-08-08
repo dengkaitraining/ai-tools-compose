@@ -320,10 +320,21 @@ cypress/screenshots
 .cptr
 
 # docker folder
-data/
+#data/
+data/n8n/
+data/ollama/
+data/open-webui/
+data/postgres/
+data/qdrant/
+data/vllm/
 #surreal_data/
 #notebook_data/
 #local-files/
 #tika-config.xml/
 #bash/02-ollama-pull-module.sh
 #docs/
+docs/docker/
+docs/n8n/
+docs/ollama/
+docs/tika/
+docs/mv-to-tmp-folder.md

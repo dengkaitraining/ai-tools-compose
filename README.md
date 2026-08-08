@@ -1,4 +1,4 @@
-# ai-tools-compose
+# LLM-AI-Tools
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/dengkaitraining/llm-ai-tools)
 ![GitHub language count](https://img.shields.io/github/languages/count/dengkaitraining/llm-ai-tools)
