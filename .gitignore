@@ -256,6 +256,7 @@ web_modules/
 .env.production.local
 .env.local
 .env-bak
+.env.bak
 docker-compose-bak.yaml
 docker-compose-new.yaml
 .agents/

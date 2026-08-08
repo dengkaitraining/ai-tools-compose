@@ -2,42 +2,44 @@
 # 專案名稱: ai-tools-compose
 # 功能簡述: AI 工具整合堆疊 Docker Compose 設定檔
 # 架構模組:
-#   1. ollama      - 本地大語言模型 (LLM) 推理引擎服務
-#   2. qdrant      - 向量資料庫服務 (向量檢索與 RAG 支援)
-#   3. open-webui  - Open WebUI 網頁圖形化介面 (整合 Ollama、Qdrant 與 Tika)
-#   4. postgres    - PostgreSQL 16 關聯式資料庫 (提供 n8n 資料持久化)
-#   5. n8n         - 工作流自動化與 AI Agent 流程編排平台
-#   6. tika        - Apache Tika 文件解析伺服器 (支援 PDF/Word 等文本抽離)
-# 網路名稱: web-app-bridge (橋接網路)
-# 資料儲存: 全部掛載至專案內 `./data/` 實體相對路徑
+#   1. llm-ai-ollama      - 本地大語言模型 (LLM) 推理引擎服務
+#   2. llm-ai-qdrant      - 向量資料庫服務 (向量檢索與 RAG 支援)
+#   3. llm-ai-open-webui  - Open WebUI 網頁圖形化介面 (整合 Ollama、Qdrant 與 Tika)
+#   4. llm-ai-postgres    - PostgreSQL 18 關聯式資料庫 (提供 n8n 資料持久化)
+#   5. llm-ai-n8n         - 工作流自動化與 AI Agent 流程編排平台
+#   6. llm-ai-tika        - Apache Tika 文件解析伺服器 (支援 PDF/Word 等文本抽離)
+# 網路名稱: llm-ai-network (橋接網路)
+# 資料儲存: 全部掛載至專案內 `${DATA_DIR}/` 實體相對路徑
 # =============================================================================
 
 services:
   # ---------------------------------------------------------------------------
   # 0. 初始化資料目錄與權限修復 (自動修復 n8n 等 Volume 存取權限)
   # ---------------------------------------------------------------------------
-  init-dir:
-    container_name: init-dir
+  llm-ai-init-dir:
+    container_name: llm-ai-init-dir
     image: busybox:latest
     user: "0:0"
     command: sh /init-dir.sh
     volumes:
-      - ./data:/data
-      - ./init-dir.sh:/init-dir.sh:ro
+      - ${DATA_DIR}:/data
+      - ./scripts/init/init-dir.sh:/init-dir.sh:ro
     networks:
-      - web-app-bridge
+      - llm-ai-network
 
   # ---------------------------------------------------------------------------
   # 1. Ollama 大語言模型推理服務
   # ---------------------------------------------------------------------------
-  ollama:
-    container_name: ollama
+  llm-ai-ollama:
+    container_name: llm-ai-ollama
     image: ollama/ollama:${OLLAMA_DOCKER_TAG-latest}
     pull_policy: always
     tty: true
     restart: unless-stopped
     ports:
-      - "11434:11434" # 開放 API 埠號供外部或宿主機調用
+      - "${OLLAMA_HOST_PORT}:${OLLAMA_DOCKER_PORT}" # 開放 API 埠號供外部或宿主機調用
+    environment:
+      TZ: ${GENERIC_TIMEZONE}
     # 關鍵設定：調高檔案開啟上限
     #ulimits:
     #  nofile:
@@ -55,55 +57,57 @@ services:
     #extra_hosts:
     #  - host.docker.internal:host-gateway
     volumes:
-      - ./data/ollama:/root/.ollama # 模型檔與快取實體儲存路徑
+      - ${DATA_DIR}/ollama:/root/.ollama # 模型檔與快取實體儲存路徑
     networks:
-      - web-app-bridge
+      - llm-ai-network
 
   # ---------------------------------------------------------------------------
   # 2. Qdrant 高效能向量資料庫服務
   # ---------------------------------------------------------------------------
-  qdrant:
-    container_name: qdrant
-    image: qdrant/qdrant:latest
+  llm-ai-qdrant:
+    container_name: llm-ai-qdrant
+    image: qdrant/qdrant:${QDRANT_DOCKER_TAG-latest}
     restart: always
     ports:
-      - "6333:6333" # REST API 與 Dashboard 控制台埠號
-      - "6334:6334" # gRPC 高效傳輸介面埠號
+      - "${QDRANT_HTTP_HOST_PORT}:${QDRANT_HTTP_DOCKER_PORT}" # REST API 與 Dashboard 控制台埠號
+      - "${QDRANT_GRPC_HOST_PORT}:${QDRANT_GRPC_DOCKER_PORT}" # gRPC 高效傳輸介面埠號
     environment:
-      - QDRANT_API_KEY=${QDRANT_API_KEY}
-      - QDRANT_SERVICE_READ_ONLY_API_KEY=${QDRANT_SERVICE_READ_ONLY_API_KEY}
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
+      QDRANT_SERVICE_READ_ONLY_API_KEY: ${QDRANT_SERVICE_READ_ONLY_API_KEY}
+      TZ: ${GENERIC_TIMEZONE}
     volumes:
-      - ./data/qdrant:/qdrant/storage # 向量索引與資料持久化實體路徑
+      - ${DATA_DIR}/qdrant:/qdrant/storage # 向量索引與資料持久化實體路徑
     networks:
-      - web-app-bridge
+      - llm-ai-network
 
   # ---------------------------------------------------------------------------
   # 3. Open WebUI 網頁圖形化介面服務
   # ---------------------------------------------------------------------------
-  open-webui:
-    container_name: open-webui
+  llm-ai-open-webui:
+    container_name: llm-ai-open-webui
     image: ghcr.io/open-webui/open-webui:${WEBUI_DOCKER_TAG-main}
     restart: unless-stopped
     ports:
-      - "3000:8080" # 瀏覽器存取網址: http://localhost:3000
+      - "${WEBUI_HOST_PORT}:${WEBUI_DOCKER_PORT}" # 瀏覽器存取網址: http://localhost:3000
     environment:
-      - OLLAMA_BASE_URL=${OLLAMA_BASE_URL}
-      - WEBUI_SECRET_KEY=${WEBUI_SECRET_KEY}
-      - TIKA_SERVER_URL=${TIKA_SERVER_URL}
-      - ENABLE_SIGNUP=${ENABLE_SIGNUP}
-      - ENABLE_PERSISTENT_CONFIG=${ENABLE_PERSISTENT_CONFIG}
-      - VECTOR_DB=${VECTOR_DB}
-      - QDRANT_URI=${QDRANT_URI}
-      - QDRANT_API_KEY=${QDRANT_API_KEY}
-      - QDRANT_SERVICE_READ_ONLY_API_KEY=${QDRANT_SERVICE_READ_ONLY_API_KEY}
+      OLLAMA_BASE_URL: ${OLLAMA_BASE_URL}
+      WEBUI_SECRET_KEY: ${WEBUI_SECRET_KEY}
+      TIKA_SERVER_URL: ${TIKA_SERVER_URL}
+      ENABLE_SIGNUP: ${ENABLE_SIGNUP}
+      ENABLE_PERSISTENT_CONFIG: ${ENABLE_PERSISTENT_CONFIG}
+      VECTOR_DB: qdrant
+      QDRANT_URI: ${QDRANT_URI}
+      QDRANT_API_KEY: ${QDRANT_API_KEY}
+      QDRANT_SERVICE_READ_ONLY_API_KEY: ${QDRANT_SERVICE_READ_ONLY_API_KEY}
+      TZ: ${GENERIC_TIMEZONE}
     volumes:
-      - ./data/open-webui:/app/backend/data # WebUI 使用者設定與對話資料庫
+      - ${DATA_DIR}/open-webui:/app/backend/data # WebUI 使用者設定與對話資料庫
     depends_on:
-      ollama:
+      llm-ai-ollama:
         condition: service_started
-      qdrant:
+      llm-ai-qdrant:
         condition: service_started
-      tika:
+      llm-ai-tika:
         condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway" # 允許容器存取宿主機網路
@@ -114,98 +118,100 @@ services:
       retries: 5
       start_period: 30s
     networks:
-      - web-app-bridge
+      - llm-ai-network
 
   # ---------------------------------------------------------------------------
-  # 4. PostgreSQL 16 關聯式資料庫服務
+  # 4. PostgreSQL 18 關聯式資料庫服務
   # ---------------------------------------------------------------------------
-  postgres:
-    container_name: postgres-16
-    image: postgres:16
+  llm-ai-postgres:
+    container_name: llm-ai-postgres
+    # image: postgres:16
+    image: postgres:18
     restart: always
     ports:
-      - "5432:5432" # PostgreSQL 資料庫連線埠號
+      - "${POSTGRES_HOST_PORT}:${POSTGRES_DOCKER_PORT}" # PostgreSQL 資料庫連線埠號
     environment:
-      - POSTGRES_USER=${POSTGRES_USER}
-      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
-      - POSTGRES_DB=${POSTGRES_DB}
-      - POSTGRES_NON_ROOT_USER=${POSTGRES_NON_ROOT_USER}
-      - POSTGRES_NON_ROOT_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_NON_ROOT_USER: ${POSTGRES_NON_ROOT_USER}
+      POSTGRES_NON_ROOT_PASSWORD: ${POSTGRES_NON_ROOT_PASSWORD}
+      TZ: ${GENERIC_TIMEZONE}
     volumes:
-      - ./data/postgres:/var/lib/postgresql/data # 資料庫實體資料檔儲存區
-      - ./init-data.sh:/docker-entrypoint-initdb.d/init-data.sh # 初始化建立非 Root 使用者指令腳本
+      - ${DATA_DIR}/postgres:/var/lib/postgresql # 資料庫實體資料檔儲存區
+      - ./scripts/init/init-data.sh:/docker-entrypoint-initdb.d/init-data.sh # 初始化建立非 Root 使用者指令腳本
     healthcheck:
       test: [ 'CMD-SHELL', 'pg_isready -h localhost -U ${POSTGRES_USER} -d ${POSTGRES_DB}' ]
       interval: 5s
       timeout: 5s
       retries: 10
     networks:
-      - web-app-bridge
+      - llm-ai-network
 
   # ---------------------------------------------------------------------------
   # 5. n8n 工作流與 AI Agent 自動化服務
   # ---------------------------------------------------------------------------
-  n8n:
-    container_name: n8n
-    image: docker.n8n.io/n8nio/n8n:latest
+  llm-ai-n8n:
+    container_name: llm-ai-n8n
+    image: docker.n8n.io/n8nio/n8n:${N8N_DOCKER_TAG-latest}
     restart: always
     ports:
-      - "5678:5678" # n8n 網頁控制台埠號: http://localhost:5678
+      - "${N8N_HOST_PORT}:${N8N_DOCKER_PORT}" # n8n 網頁控制台埠號: http://localhost:5678
     environment:
-      - DB_TYPE=postgresdb
-      - DB_POSTGRESDB_HOST=postgres
-      - DB_POSTGRESDB_PORT=5432
-      - DB_POSTGRESDB_DATABASE=${POSTGRES_DB}
-      - DB_POSTGRESDB_USER=${POSTGRES_NON_ROOT_USER}
-      - DB_POSTGRESDB_PASSWORD=${POSTGRES_NON_ROOT_PASSWORD}
-      - N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS=false # 停用嚴格 POSIX 權限檢查以確保 Windows 實體掛載相容性
-      - N8N_HOST=${N8N_DOMAIN_NAME}
-      - N8N_PORT=5678
-      - N8N_PROTOCOL=http
-      - NODE_ENV=production
-      - WEBHOOK_URL=${N8N_WEBHOOK_URL}
-      - GENERIC_TIMEZONE=${GENERIC_TIMEZONE}
-      - TZ=${GENERIC_TIMEZONE}
-      - N8N_SECURE_COOKIE=false
+      DB_TYPE: postgresdb
+      DB_POSTGRESDB_HOST: llm-ai-postgres
+      DB_POSTGRESDB_PORT: ${POSTGRES_DOCKER_PORT}
+      DB_POSTGRESDB_DATABASE: ${POSTGRES_DB}
+      DB_POSTGRESDB_USER: ${POSTGRES_NON_ROOT_USER}
+      DB_POSTGRESDB_PASSWORD: ${POSTGRES_NON_ROOT_PASSWORD}
+      N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS: ${N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS}
+      N8N_HOST: ${N8N_DOMAIN_NAME}
+      N8N_PORT: ${N8N_DOCKER_PORT}
+      N8N_PROTOCOL: ${N8N_PROTOCOL}
+      NODE_ENV: ${N8N_NODE_ENV}
+      WEBHOOK_URL: ${N8N_WEBHOOK_URL}
+      N8N_SECURE_COOKIE: ${N8N_SECURE_COOKIE}
+      TZ: ${GENERIC_TIMEZONE}
     links:
-      - postgres
+      - llm-ai-postgres
     volumes:
-      - ./data/n8n:/home/node/.n8n # n8n 工作流程與認證資訊儲存區
+      - ${DATA_DIR}/n8n:/home/node/.n8n # n8n 工作流程與認證資訊儲存區
       - ./local-files:/files # 允許 n8n 讀寫本地端檔案儲存區
     depends_on:
-      init-dir:
+      llm-ai-init-dir:
         condition: service_completed_successfully
-      ollama:
+      llm-ai-ollama:
         condition: service_started
-      postgres:
+      llm-ai-postgres:
         condition: service_healthy
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - web-app-bridge
+      - llm-ai-network
 
   # ---------------------------------------------------------------------------
   # 6. Apache Tika 文件文本解析與抽取服務
   # ---------------------------------------------------------------------------
-  tika:
-    container_name: apache-tika
-    image: apache/tika:latest-full
+  llm-ai-tika:
+    container_name: llm-ai-tika
+    image: apache/tika:${TIKA_DOCKER_TAG}
     restart: unless-stopped
     ports:
-      - "9998:9998" # Tika REST Server API 埠號
+      - "${TIKA_HOST_PORT}:${TIKA_DOCKER_PORT}" # Tika REST Server API 埠號
     environment:
-      - TIKA_CHILD_JVM_OPTS=-Xmx4g # 限制 JVM 最大記憶體為 4GB 避免大型文件 OOM
+      TIKA_CHILD_JVM_OPTS: ${TIKA_CHILD_JVM_OPTS} # 限制 JVM 最大記憶體為 4GB 避免大型文件 OOM
+      TZ: ${GENERIC_TIMEZONE}
     depends_on:
-      ollama:
+      llm-ai-ollama:
         condition: service_started
     extra_hosts:
       - "host.docker.internal:host-gateway"
     networks:
-      - web-app-bridge
+      - llm-ai-network
 
 # -----------------------------------------------------------------------------
 # 網路定義
 # -----------------------------------------------------------------------------
 networks:
-  web-app-bridge:
+  llm-ai-network:
     driver: bridge # 使用外部預先建立之橋接網路，確保與其他堆疊模組彈性連線
