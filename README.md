@@ -1,4 +1,4 @@
-# LLM-AI-Tools
+# `LLM-AI-Tools` 跨平台一站式微服務容器化方案
 
 ![GitHub repo size](https://img.shields.io/github/repo-size/dengkaitraining/llm-ai-tools)
 ![GitHub language count](https://img.shields.io/github/languages/count/dengkaitraining/llm-ai-tools)
@@ -7,7 +7,7 @@
 ![Docker Compose V2](https://img.shields.io/badge/Docker--Compose-V2-blue?logo=docker)
 ![License](https://img.shields.io/badge/License-MIT-green)
 
-`llm-ai-tools` 是一個整合大語言模型 (LLM) 推理、向量檢索 (RAG)、工作流自動化 (Automation) 及多格式文件文字抽離的一站式微服務 Docker 容器堆疊方案。內建跨平台 (Linux / Windows WSL2 / macOS) 資料目錄權限自動修復機制，透過本專案，開發者與企業可快速於本機或伺服器建置穩定、無縫運作的 AI 工具開發與運行環境。
+「**`LLM-AI-Tools` 跨平台一站式微服務容器化方案**」 是一個整合 `Ollama`（本地 `LLM`）、`Qdrant`（向量資料庫）、`n8n`（工作流引擎）與 `Apache Tika`（文件解析），打造 100% 地端部署與完全資料隱私之 `AI` 自動化堆疊；支援 `Linux`、`Windows WSL2` 及 `macOS` 跨平台部署，實現企業級 `RAG` 與自動化工作流。
 
 ---
 
