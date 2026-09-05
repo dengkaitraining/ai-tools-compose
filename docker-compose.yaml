@@ -1,5 +1,5 @@
 # =============================================================================
-# 專案名稱: ai-tools-compose
+# 專案名稱: llm-ai-tools
 # 功能簡述: AI 工具整合堆疊 Docker Compose 設定檔
 # 架構模組:
 #   1. llm-ai-ollama      - 本地大語言模型 (LLM) 推理引擎服務
@@ -47,14 +47,14 @@ services:
     #    soft: 65536
     #    hard: 65536
     # GPU support
-#    deploy:
-#      resources:
-#        reservations:
-#          devices:
-#            - driver: ${OLLAMA_GPU_DRIVER-nvidia}
-#              count: ${OLLAMA_GPU_COUNT-1}
-#              capabilities:
-#                - gpu
+    #    deploy:
+    #      resources:
+    #        reservations:
+    #          devices:
+    #            - driver: ${OLLAMA_GPU_DRIVER-nvidia}
+    #              count: ${OLLAMA_GPU_COUNT-1}
+    #              capabilities:
+    #                - gpu
     #extra_hosts:
     #  - host.docker.internal:host-gateway
     volumes:
@@ -113,7 +113,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway" # 允許容器存取宿主機網路
     healthcheck:
-      test: ["CMD", "curl", "-sf", "http://localhost:8080/api/version"]
+      test: [ "CMD", "curl", "-sf", "http://localhost:8080/api/version" ]
       interval: 15s
       timeout: 5s
       retries: 5

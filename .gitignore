@@ -338,3 +338,4 @@ docs/n8n/
 docs/ollama/
 docs/tika/
 docs/mv-to-tmp-folder.md
+scripts/init/init-data-bak.sh

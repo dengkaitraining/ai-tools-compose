@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!-- ===========================================================================
-  專案名稱: ai-tools-compose
+  專案名稱: llm-ai-tools
   檔案用途: Apache Tika 解析伺服器自訂設定檔 (tika-config.xml)
   功能說明:
     1. 定義 Apache Tika 文本抽取引擎的解析器策略 (Parser Configuration)
